@@ -780,6 +780,26 @@ public class LeetCode_12_18 {
         return y;
     }
 
+    public void testFor(){
+        try {
 
+        }catch (Exception e){
+            throw new RuntimeException("runtimeException");
+        }
+    }
+}
+
+class MyException extends RuntimeException{
+    MyException(){
+
+    }
+
+    MyException(String msg){
+        super("我的异常： " + msg);
+    }
+
+    MyException(String msg, RuntimeException e){
+        super("我的异常： " + msg, e);
+    }
 }
 
