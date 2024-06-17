@@ -780,25 +780,529 @@ public class LeetCode_12_18 {
         return y;
     }
 
-    public void testFor(){
+    @Test
+    public void testFor() {
         try {
-
-        }catch (Exception e){
+            Thread.sleep(1000);
+        } catch (Exception e) {
             throw new RuntimeException("runtimeException");
         }
     }
-}
 
-class MyException extends RuntimeException{
-    MyException(){
+    /**
+     * 找到冠军 II
+     */
+    public int findChampion(int n, int[][] edges) {
+        List<List<Integer>> adj = new ArrayList<>();
+        int[] inDegrees = new int[n];
+        for (int i = 0; i < n; i++) {
+            adj.add(new ArrayList<>());
+        }
+        for (int[] edge : edges) {
+            adj.get(edge[0]).add(edge[1]);
+            inDegrees[edge[1]]++;
+        }
+        Deque<Integer> queue = new ArrayDeque<>();
+        for (int i = 0; i < n; i++) {
+            if (inDegrees[i] == 0) {
+                queue.offer(i);
+            }
+        }
+        if (queue.size() != 1) {
+            return -1;
+        }
+        List<Integer> list = new ArrayList<>();
+        return queue.peek();
+    }
+
+    public int[] findOriginalArray(int[] changed) {
+        int len = changed.length;
+        if (len % 2 != 0) return new int[]{};
+        Arrays.sort(changed);
+        Map<Integer, Integer> map = new HashMap<>();
+        int l = len / 2;
+        int[] res = new int[l];
+        int index = 0;
+        for (int i = 0; i < len; i++) {
+            int original = changed[i];
+            int change = original * 2;
+            if (!map.containsKey(original)) {
+                map.put(change, map.getOrDefault(change, 0) + 1);
+            } else {
+                int count = map.get(original);
+                if (count == 1) {
+                    map.remove(original);
+                } else {
+                    map.put(original, map.get(original) - 1);
+                }
+                res[index++] = original / 2;
+            }
+        }
+        if (!map.isEmpty()) return new int[]{};
+        return res;
+    }
+
+    private int getOriginal(int num) {
+        if (num % 2 != 0) return -1;
+        else return num / 2;
+    }
+
+    public int minSkips(int[] dist, int speed, int hoursBefore) {
+        int n = dist.length;
+        final double EPS = 1e-7;
+        double[][] dp = new double[n + 1][n + 1];
+        for (int i = 0; i <= n; i++) {
+            Arrays.fill(dp[i], Double.MAX_VALUE);
+        }
+        dp[0][0] = 0;
+        for (int i = 1; i <= n; i++) {
+            for (int j = 0; j <= i; j++) {
+                if (j != i) {
+                    dp[i][j] = Math.min(Math.ceil(dp[i - 1][j] + (double) dist[i - 1] / speed - EPS), dp[i][j]);
+                }
+                if (j != 0) {
+                    dp[i][j] = Math.min(dp[i][j], dp[i - 1][j - 1] + (double) dist[i - 1] / speed);
+                }
+            }
+        }
+        for (int j = 0; j <= n; j++) {
+            if (dp[n][j] < hoursBefore + EPS) {
+                return j;
+            }
+        }
+        return -1;
+    }
+
+
+    List<List<Integer>> resCombinationSum3 = new ArrayList<>();
+    LinkedList<Integer> pathCombinationSum3 = new LinkedList<>();
+
+    public List<List<Integer>> combinationSum3(int k, int n) {
+        backtrackingCombinationSum3(0, n, k);
+        return resCombinationSum3;
+    }
+
+    private void backtrackingCombinationSum3(int index, int n, int k) {
+        if (k == 0) {
+            if (n == 0) resCombinationSum3.add(new ArrayList<>(pathCombinationSum3));
+            return;
+        }
+        for (int i = index; i < 10; i++) {
+            if (n < i) break;
+            pathCombinationSum3.add(i);
+            backtrackingCombinationSum3(i + 1, n - i, k - 1);
+            pathCombinationSum3.removeLast();
+        }
+    }
+
+    List<List<Integer>> resCombinationSum4 = new ArrayList<>();
+    LinkedList<Integer> pathCombinationSum4 = new LinkedList<>();
+
+    public int combinationSum4(int[] nums, int target) {
+        int[] dp = new int[target + 1];
+        dp[0] = 1;
+        Arrays.sort(nums);
+        for (int i = 1; i <= target; i++) {
+            for (int j = 0; j < nums.length; j++) {
+                if (nums[j] > i) break;
+                dp[i] += dp[i - nums[j]];
+            }
+        }
+        return dp[target];
+    }
+
+    private void backtrackingCombinationSum4(int target, int[] nums) {
+        if (target == 0) {
+            resCombinationSum4.add(new ArrayList<>(pathCombinationSum4));
+            return;
+        }
+        for (int i = 0; i < nums.length; i++) {
+            if (nums[i] > target) break;
+            pathCombinationSum4.add(nums[i]);
+            backtrackingCombinationSum4(target - nums[i], nums);
+            pathCombinationSum4.removeLast();
+        }
+    }
+
+    public int[] findColumnWidth(int[][] grid) {
+        int m = grid.length;
+        int n = grid[0].length;
+        int[] res = new int[n];
+        for (int i = 0; i < n; i++) {
+            int width = Integer.MIN_VALUE;
+            for (int j = 0; j < m; j++) {
+                width = Math.max(width, calculateLen(grid[j][i]));
+            }
+            res[i] = width;
+        }
+        return res;
+    }
+
+    private int calculateLen(int num) {
+        if (num == 0) return 1;
+        int res = 0;
+        if (num < 0) {
+            res++;
+            num = -num;
+        }
+        while (num != 0) {
+            num /= 10;
+            res++;
+        }
+        return res;
+    }
+
+    public int minimumRounds(int[] tasks) {
+        int n = tasks.length;
+        int[] dp = new int[n + 1];
+        getDp(n, dp);
+        Arrays.sort(tasks);
+        int num = tasks[0], index = 0, count = 0, res = 0;
+        while (index < n) {
+            if (tasks[index] == num) {
+                count++;
+            } else {
+                if (count == 1 || index == (n - 1)) return -1;
+                res += dp[count];
+                count = 1;
+                num = tasks[index];
+            }
+            index++;
+        }
+        if (count == 1) return -1;
+        res += dp[count];
+        return res;
+    }
+
+    private void getDp(int n, int[] dp) {
+        if (n <= 3) {
+            Arrays.fill(dp, 1);
+            return;
+        }
+        dp[1] = 1;
+        dp[2] = 1;
+        dp[3] = 1;
+        for (int i = 4; i <= n; i++) {
+            dp[i] = Math.min(dp[i - 2], dp[i - 3]) + 1;
+        }
+    }
+
+    public int longestEqualSubarray(List<Integer> nums, int k) {
+        int n = nums.size();
+        HashMap<Integer, List<Integer>> pos = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            pos.computeIfAbsent(nums.get(i), x -> new ArrayList<>()).add(i);
+        }
+        int ans = 0;
+        for (List<Integer> value : pos.values()) {
+            // for循环里递增的一般是滑动窗口的右指针
+            for (int i = 0, j = 0; i < value.size(); i++) {
+                while (value.get(i) - value.get(j) - (i - j) > k) {
+                    j++;
+                }
+                ans = Math.max(ans, i - j + 1);
+            }
+        }
+        return ans;
+    }
+
+    public int[] mostCompetitive(int[] nums, int k) {
+        Deque<Integer> stack = new ArrayDeque<>();
+        int n = nums.length;
+        for (int i = 0; i < n; i++) {
+            while (!stack.isEmpty() && stack.peek() > nums[i] && (stack.size() + (n - i) > k)) {
+                stack.pop();
+            }
+            stack.push(nums[i]);
+        }
+        int[] res = new int[k];
+        for (int i = 0; i < k; i++) {
+            res[i] = stack.pollLast();
+        }
+        return res;
 
     }
 
-    MyException(String msg){
+    public int[] findIndices(int[] nums, int indexDifference, int valueDifference) {
+        int n = nums.length;
+        int right = 0;
+        for (int left = 0; left < n; left++) {
+            while (right < n) {
+                if ((right - left >= indexDifference) && (Math.abs(nums[right] - nums[left]) >= valueDifference)) {
+                    return new int[]{left, right};
+                }
+                right++;
+            }
+            right = left;
+        }
+        return new int[]{-1, -1};
+    }
+
+    @Test
+    public void testForMostCompetitive() {
+        mostCompetitive(new int[]{3, 5, 2, 6}, 2);
+    }
+
+    ArrayList<List<Integer>> resMissingRolls = new ArrayList<>();
+    LinkedList<Integer> pathMissingRolls = new LinkedList<>();
+    int nMissingRolls;
+
+    public int[] missingRolls(int[] rolls, int mean, int n) {
+        int m = rolls.length;
+        int target = (m + n) * mean - Arrays.stream(rolls).sum();
+        if (target < n || target > 6 * n) return new int[]{};
+        int quotient = target / n;
+        int remainder = target % n;
+        int[] res = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            res[i] = quotient + ((i < remainder) ? 1 : 0);
+        }
+        return res;
+    }
+
+
+    public void backtrackingMissingRolls(int target) {
+        if (target < 0 || pathMissingRolls.size() > nMissingRolls) {
+            return;
+        }
+        if (target == 0 && pathMissingRolls.size() == nMissingRolls) {
+            resMissingRolls.add(new ArrayList<>(pathMissingRolls));
+        }
+        for (int i = 1; i <= 6; i++) {
+            if (target - i < 0) break;
+            pathMissingRolls.add(i);
+            backtrackingMissingRolls(target - i);
+            pathMissingRolls.removeLast();
+        }
+    }
+
+    public List<Integer> findPeaks(int[] mountain) {
+        List<Integer> res = new ArrayList<>();
+        for (int i = 1; i < mountain.length - 1; i++) {
+            if (mountain[i] > mountain[i - 1] && mountain[i] > mountain[i + 1]) {
+                res.add(i++);
+            }
+        }
+        return res;
+    }
+
+    public int maximumLength(String s) {
+        int len = s.length();
+        int res = -1;
+        List<Integer>[] chs = new List[26];
+        for (int i = 0; i < 26; i++) {
+            chs[i] = new ArrayList<>();
+        }
+        int cnt = 0;
+        for (int i = 0; i < len; i++) {
+            cnt++;
+            if (i == len - 1 || s.charAt(i) != s.charAt(i + 1)) {
+                int ch = s.charAt(i) - 'a';
+                chs[ch].add(cnt);
+                cnt = 0;
+
+                for (int j = chs[ch].size() - 1; j > 0; j--) {
+                    if (chs[ch].get(j) > chs[ch].get(j - 1)) {
+                        Collections.swap(chs[ch], j, j - 1);
+                    } else {
+                        break;
+                    }
+                }
+                if (chs[ch].size() > 3) {
+                    chs[ch].remove(chs[ch].size() - 1);
+                }
+            }
+        }
+
+        for (int i = 0; i < 26; i++) {
+            if (chs[i].size() > 0 && chs[i].get(0) > 2) {
+                res = Math.max(res, chs[i].get(0) - 2);
+            }
+            if (chs[i].size() > 1 && chs[i].get(0) > 1) {
+                res = Math.max(res, Math.min(chs[i].get(0) - 1, chs[i].get(1)));
+            }
+            if (chs[i].size() > 2) {
+                res = Math.max(res, chs[i].get(2));
+            }
+        }
+        return res;
+
+    }
+
+    public int[] findMissingAndRepeatedValues(int[][] grid) {
+        int n = grid.length;
+        Set<Integer> set = new HashSet<>();
+        for (int i = 1; i <= n * n; i++) {
+            set.add(i);
+        }
+        int[] res = new int[2];
+        for (int[] ints : grid) {
+            for (int j = 0; j < n; j++) {
+                if (set.contains(ints[j])) {
+                    set.remove(ints[j]);
+                } else {
+                    res[0] = ints[j];
+                }
+            }
+        }
+        List<Integer> list = new ArrayList<>(set);
+        res[1] = list.get(0);
+        return res;
+    }
+
+    int limit;
+    int mDistributeCandies;
+    int resDistributeCandies;
+    LinkedList<Integer> pathDistributeCandies = new LinkedList<>();
+
+
+    public void backtrackingDistributeCandies(int n) {
+        if (pathDistributeCandies.size() == mDistributeCandies) {
+            if (n == 0) {
+                resDistributeCandies++;
+            }
+            return;
+        }
+        for (int i = 0; i <= limit; i++) {
+            if (n < i) break;
+            pathDistributeCandies.add(i);
+            backtrackingDistributeCandies(n - i);
+            pathDistributeCandies.removeLast();
+        }
+    }
+
+
+    public int distributeCandies(int[] candyType) {
+        int n = candyType.length;
+        Set<Integer> set = new HashSet<>();
+        for (int i = 0; i < n; i++) {
+            set.add(candyType[i]);
+        }
+        return Math.min(n / 2, set.size());
+    }
+
+    public int[] distributeCandies(int candies, int num_people) {
+        int[] res = new int[num_people];
+        int num = 1;
+        while (candies >= num) {
+            res[(num - 1) % num_people] += num;
+            candies -= num;
+            num++;
+        }
+        res[(num - 1) % num_people] += candies;
+        return res;
+    }
+
+    public long minimumSteps(String s) {
+        int n = s.length();
+        long res = 0;
+        int sum = 0;
+        for (int i = 0; i < n; i++) {
+            if (s.charAt(i) == '1') sum++;
+            else res += sum;
+        }
+        return res;
+    }
+
+    public int maxOperations(int[] nums) {
+        int n = nums.length;
+        int cnt = nums[0] + nums[1];
+        int res = 1;
+        for (int i = 2; i < n; i += 2) {
+            if (i != (n - 1) && nums[i] + nums[i + 1] == cnt) res++;
+            else break;
+        }
+        return res;
+    }
+
+    public boolean isMatch(String s, String p) {
+        int m = s.length();
+        int n = p.length();
+        boolean[][] dp = new boolean[m + 1][n + 1];
+        dp[0][0] = true;
+        for (int i = 0; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (p.charAt(j - 1) == '*') {
+                    dp[i][j] = dp[i][j - 2];
+                    if (matches(s, p, i, j - 1)) {
+                        dp[i][j] = dp[j][j] || dp[i - 1][j];
+                    }
+                } else {
+                    if (matches(s, p, i, j)) {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    }
+                }
+            }
+        }
+        return dp[m][n];
+    }
+
+    private boolean matches(String s, String p, int i, int j) {
+        if (i == 0) return false;
+        if (p.charAt(j - 1) == '.') return true;
+        return s.charAt(i - 1) == p.charAt(j - 1);
+    }
+
+    public int maximumBeauty(int[] nums, int k) {
+        Arrays.sort(nums);
+        int n = nums.length, res = 0;
+        for (int i = 0, j = 0; i < n; i++) {
+            while (nums[i] - 2 * k > nums[j]) {
+                j++;
+            }
+            res = Math.max(res, i - j + 1);
+        }
+        return res;
+    }
+
+    public int findLUSlength(String a, String b) {
+        return a.equals(b) ? -1 : Math.max(a.length(), b.length());
+    }
+
+    public int findLUSlength(String[] strs) {
+        int n = strs.length;
+        int ans = -1;
+        for (int i = 0; i < n; i++) {
+            boolean check = true;
+            for (int j = 0; j < n; j++) {
+                if (i != j && isSubSeq(strs[i], strs[j])) {
+                    check = false;
+                    break;
+                }
+            }
+            if (check) {
+                ans = Math.max(ans, strs[i].length());
+            }
+        }
+        return ans;
+    }
+
+    private boolean isSubSeq(String s, String t) {
+        int ps = 0, pt = 0;
+        while (ps < s.length() && pt < t.length()) {
+            if (s.charAt(ps) == t.charAt(pt)) {
+                ps++;
+            }
+            pt++;
+        }
+        return ps == s.length();
+    }
+
+
+}
+
+
+class MyException extends RuntimeException {
+    MyException() {
+
+    }
+
+    MyException(String msg) {
         super("我的异常： " + msg);
     }
 
-    MyException(String msg, RuntimeException e){
+    MyException(String msg, RuntimeException e) {
         super("我的异常： " + msg, e);
     }
 }
