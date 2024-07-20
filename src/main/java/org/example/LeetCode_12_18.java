@@ -1,9 +1,13 @@
 package org.example;
 
 import org.junit.Test;
+import sun.rmi.runtime.Log;
 
 import javax.swing.plaf.metal.MetalTheme;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @program: Algorithm
@@ -1287,6 +1291,584 @@ public class LeetCode_12_18 {
             pt++;
         }
         return ps == s.length();
+    }
+
+    public String discountPrices(String sentence, int discount) {
+        StringBuilder res = new StringBuilder();
+        for (String s : sentence.split(" ")) {
+            long price = isPrice(s);
+            if (price != -1) {
+                res.append("$").append(discountPrice(price, discount)).append(" ");
+            } else {
+                res.append(s).append(" ");
+            }
+        }
+        return res.toString().trim();
+    }
+
+    private long isPrice(String priceStr) {
+        int n = priceStr.length();
+        if (n < 2 || priceStr.charAt(0) != '$' || priceStr.charAt(1) == '0') return -1;
+        for (int i = 1; i < n; i++) {
+            if (priceStr.charAt(i) < '0' || priceStr.charAt(i) > '9') return -1;
+        }
+        return Long.parseLong(priceStr.substring(1));
+    }
+
+    private String discountPrice(long price, int discount) {
+        double res = price * (1 - discount / 100.0);
+        return String.format("$%.2f", res);
+    }
+
+    @Test
+    public void discountPricess() {
+        double v = 100 * 8 * 0.01;
+        System.out.println(v);
+    }
+
+    public int[] nextGreaterElements(int[] nums) {
+        int n = nums.length;
+        int[] res = new int[n];
+        Arrays.fill(res, -1);
+        Deque<Integer> stack = new ArrayDeque<>();
+        for (int i = 0; i < 2 * n - 1; i++) {
+            while (!stack.isEmpty() && nums[stack.peek() % n] < nums[i % n]) {
+                res[stack.pop() % n] = nums[i % n];
+            }
+            stack.push(i);
+        }
+        return res;
+    }
+
+    public int countArrangement(int n) {
+        int[] memo = new int[1 << n];
+        Arrays.fill(memo, -1);
+        return dfsCountArrangement(0, n, memo);
+    }
+
+    public int dfsCountArrangement(int s, int n, int[] memo) {
+        if (s == (1 << n) - 1) {
+            return 1;
+        }
+        if (memo[s] != -1) {
+            return memo[s];
+        }
+        int res = 0;
+        int i = Integer.bitCount(s) + 1;
+        for (int j = 1; j <= n; j++) {
+            if ((s >> (j - 1) & 1) == 0 && (i % j == 0 || j % i == 0)) {
+                res += dfsCountArrangement(s | (1 << (j - 1)), n, memo);
+            }
+        }
+        memo[s] = res;
+        return res;
+    }
+
+    public int specialPerm(int[] nums) {
+        int n = nums.length;
+        long[][] memo = new long[1 << n][n];
+        for (long[] longs : memo) {
+            Arrays.fill(longs, -1);
+        }
+        long res = 0;
+        for (int i = 0; i < n; i++) {
+            res += dfsSpecialPerm(1 << i, n, memo, i, nums);
+        }
+        return (int) (res % 1000000007);
+    }
+
+    public long dfsSpecialPerm(int s, int n, long[][] memo, int j, int[] nums) {
+        if (s == (1 << n) - 1) {
+            return 1;
+        }
+        if (memo[s][j] != -1) {
+            return memo[s][j];
+        }
+        long res = 0;
+        for (int i = 0; i < n; i++) {
+            if (((s >> i) & 1) == 0 && (nums[j] % nums[i] == 0 || nums[i] % nums[j] == 0)) {
+                res += dfsSpecialPerm(s | (1 << i), n, memo, i, nums);
+            }
+        }
+        memo[s][j] = res;
+        return res;
+    }
+
+    public String smallestString(String s) {
+        char[] chars = new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+        int n = s.length();
+        StringBuilder res = new StringBuilder();
+        int left = -1, right = -1;
+        for (int i = 0; i < n; i++) {
+            if (s.charAt(i) != 'a') {
+                left = i;
+                break;
+            }
+            res.append('a');
+        }
+        if (left == -1) {
+            return s.substring(0, n - 1) + 'z';
+        }
+        for (int i = left; i < n; i++) {
+            if (s.charAt(i) != 'a') {
+                res.append(chars[(s.charAt(i) - 'a') - 1]);
+            } else {
+                right = i;
+                break;
+            }
+        }
+        if (right != -1) {
+            for (int i = right; i < n; i++) {
+                res.append(s.charAt(i));
+            }
+        }
+        return res.toString();
+    }
+
+    @Test
+    public void smallestStringTest() {
+        System.out.println('b' - 1);
+    }
+
+    public int pivotIndex(int[] nums) {
+        int sum = Arrays.stream(nums).sum();
+        int leftCnt = 0;
+        for (int i = 0; i < nums.length; i++) {
+            if ((leftCnt * 2) == (sum - nums[i])) {
+                return i;
+            }
+            leftCnt += nums[i];
+        }
+        return -1;
+    }
+
+    public int incremovableSubarrayCount(int[] nums) {
+        int n = nums.length;
+        int res = 0;
+        int l = 1;
+        while (l < n && nums[l] > nums[l - 1]) {
+            l++;
+        }
+        res += l + (l < n ? 1 : 0);
+        for (int r = n - 2; r >= 0; r--) {
+            while (l > 0 && nums[r + 1] <= nums[l - 1]) {
+                l--;
+            }
+            res += l + (l <= r ? 1 : 0);
+            if (nums[r] >= nums[r + 1]) {
+                break;
+            }
+        }
+        return res;
+    }
+
+    public boolean isIncreasing(int[] nums, int l, int r) {
+        for (int i = 1; i < nums.length; i++) {
+            if (i >= l && i <= r + 1) {
+                continue;
+            }
+            if (nums[i] <= nums[i - 1]) {
+                return false;
+            }
+        }
+        if (l - 1 >= 0 && r + 1 < nums.length && nums[r + 1] <= nums[l - 1]) {
+            return false;
+        }
+        return true;
+    }
+
+    public int minimumDistance(int[][] points) {
+        TreeMap<Integer, Integer> xs = new TreeMap<>();
+        TreeMap<Integer, Integer> ys = new TreeMap<>();
+        // 将点绕原点顺时针旋转45度后并扩大根号2倍后的坐标值
+        for (int[] point : points) {
+            xs.merge(point[0] + point[1], 1, Integer::sum);
+            ys.merge(point[1] - point[0], 1, Integer::sum);
+        }
+        int ans = Integer.MAX_VALUE;
+        for (int[] p : points) {
+            int x = p[0] + p[1];
+            int y = p[1] - p[0];
+            // 有可能有相同的点，所以要判断，value表示在该位置的点的个数
+            if (xs.get(x) == 1) xs.remove(x);
+            else xs.merge(x, -1, Integer::sum);
+            if (ys.get(y) == 1) ys.remove(y);
+            else ys.merge(y, -1, Integer::sum);
+
+            int dx = xs.lastKey() - xs.firstKey();
+            int dy = ys.lastKey() - ys.firstKey();
+            ans = Math.min(ans, Math.max(dx, dy));
+
+            // 枚举完该点后恢复其个数
+            xs.merge(x, 1, Integer::sum);
+            ys.merge(y, 1, Integer::sum);
+        }
+        return ans;
+    }
+
+    public boolean canSortArray(int[] nums) {
+        int n = nums.length;
+        int preMax = 0;
+        // 外循环没有递增逻辑
+        for (int i = 0; i < n; ) {
+            int curMax = 0;
+            int ones = Integer.bitCount(nums[i]);
+            while (i < n && Integer.bitCount(nums[i]) == ones) {
+                if (nums[i] < preMax) {
+                    return false;
+                }
+                curMax = Math.max(curMax, nums[i++]);
+            }
+            preMax = curMax;
+        }
+        return true;
+    }
+
+    public int[] numberGame(int[] nums) {
+        Arrays.sort(nums);
+        int n = nums.length;
+        int[] arr = new int[n];
+        for (int i = 0; i < n; i += 2) {
+            arr[i] = nums[i + 1];
+            arr[i + 1] = nums[i];
+        }
+        return arr;
+    }
+
+    public int maxIncreaseKeepingSkyline(int[][] grid) {
+        int n = grid.length;
+        int[] rowMax = new int[n];
+        int[] colMax = new int[n];
+        for (int i = 0; i < n; i++) {
+            rowMax[i] = 0;
+            for (int j = 0; j < n; j++) {
+                rowMax[i] = Math.max(rowMax[i], grid[i][j]);
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            colMax[i] = 0;
+            for (int j = 0; j < n; j++) {
+                colMax[i] = Math.max(colMax[i], grid[j][i]);
+            }
+        }
+        int res = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                res += Math.min(rowMax[i], colMax[j]) - grid[i][j];
+            }
+        }
+        return res;
+
+    }
+
+    public String intToRoman(int num) {
+        char[] chars = new char[]{'I', 'V', 'X', 'L', 'C', 'D', 'M'};
+        List<Integer> nums = getNums(num);
+        StringBuilder res = new StringBuilder();
+        for (int i = 0; i < nums.size(); i++) {
+            int n = nums.get(i);
+            if (n > 0 && n < 4) {
+                for (int j = 0; j < n; j++) {
+                    res.append(chars[2 * i]);
+                }
+            } else if (n > 4 && n < 9) {
+                for (int j = 5; j < n; j++) {
+                    res.append(chars[2 * i]);
+                }
+                res.append(chars[2 * i + 1]);
+            } else if (n == 4) {
+                res.append(chars[2 * i + 1]).append(chars[2 * i]);
+            } else if (n == 9) {
+                res.append(chars[2 * (i + 1)]).append(chars[2 * i]);
+            }
+        }
+        return res.reverse().toString();
+    }
+
+    private List<Integer> getNums(int num) {
+        List<Integer> list = new ArrayList<>();
+        while (num != 0) {
+            list.add(num % 10);
+            num /= 10;
+        }
+        return list;
+    }
+
+    public int romanToInt(String s) {
+        int n = s.length();
+        char[] chars = new char[]{'I', 'V', 'X', 'L', 'C', 'D', 'M'};
+        int[] ints = new int[]{1, 5, 10, 50, 100, 500, 1000};
+        Map<Character, Integer> map = new HashMap<>();
+        for (int i = 0; i < chars.length; i++) {
+            map.put(chars[i], ints[i]);
+        }
+        int res = 0;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == 'I' && i < n - 1 && s.charAt(i + 1) == 'V') {
+                res += 4;
+                i++;
+            } else if (c == 'I' && i < n - 1 && s.charAt(i + 1) == 'X') {
+                res += 9;
+                i++;
+            } else if (c == 'X' && i < n - 1 && s.charAt(i + 1) == 'L') {
+                res += 40;
+                i++;
+            } else if (c == 'X' && i < n - 1 && s.charAt(i + 1) == 'C') {
+                res += 90;
+                i++;
+            } else if (c == 'C' && i < n - 1 && s.charAt(i + 1) == 'D') {
+                res += 400;
+                i++;
+            } else if (c == 'C' && i < n - 1 && s.charAt(i + 1) == 'M') {
+                res += 900;
+                i++;
+            } else {
+                res += map.get(c);
+            }
+        }
+        return res;
+    }
+
+    public int threeSumClosest(int[] nums, int target) {
+        int n = nums.length;
+        Arrays.sort(nums);
+        int res = nums[0] + nums[1] + nums[2];
+        for (int i = 0; i < n - 2; i++) {
+            int min = nums[i] + nums[i + 1] + nums[i + 2];
+            int max = nums[i] + nums[n - 2] + nums[n - 1];
+            if (min > target) {
+                if (Math.abs(min - target) < Math.abs(res - target)) {
+                    res = min;
+                }
+                break;
+            }
+            if (max < res) {
+                if (Math.abs(max - target) < Math.abs(res - target)) {
+                    res = max;
+                }
+                continue;
+            }
+            int left = i + 1, right = n - 1;
+            while (left < right) {
+                int sum = nums[i] + nums[left] + nums[right];
+                if (sum < target) {
+                    left++;
+                } else if (sum > target) {
+                    right--;
+                } else {
+                    return target;
+                }
+                if (Math.abs(sum - target) < Math.abs(res - target)) {
+                    res = sum;
+                }
+            }
+        }
+        return res;
+    }
+
+    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
+        if (list1 == null) {
+            return list2;
+        } else if (list2 == null) {
+            return list1;
+        } else if (list1.val > list2.val) {
+            list2.next = mergeTwoLists(list1, list2.next);
+            return list2;
+        } else {
+            list1.next = mergeTwoLists(list1.next, list2);
+            return list1;
+        }
+
+    }
+
+    public List<List<String>> accountsMerge(List<List<String>> accounts) {
+        int n = accounts.size();
+        Map<String, List<Integer>> emailToIdx = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            for (int j = 1; j < accounts.get(i).size(); j++) {
+                emailToIdx.computeIfAbsent(accounts.get(i).get(j), x -> new ArrayList<>()).add(i);
+            }
+        }
+        ArrayList<List<String>> ans = new ArrayList<>();
+        boolean[] vis = new boolean[n];
+        HashSet<String> emailSet = new HashSet<>();
+        for (int i = 0; i < n; i++) {
+            if (vis[i]) {
+                continue;
+            }
+            emailSet.clear();
+            accountsMergeDFS(accounts, i, emailToIdx, vis, emailSet);
+            List<String> res = new ArrayList<>(emailSet);
+            Collections.sort(res);
+            res.add(0, accounts.get(i).get(0));
+            ans.add(res);
+        }
+        return ans;
+    }
+
+    private void accountsMergeDFS(List<List<String>> accounts, int i, Map<String, List<Integer>> emailToIdx, boolean[] vis, Set<String> emailSet) {
+        vis[i] = true;
+        for (int j = 1; j < accounts.get(i).size(); j++) {
+            String email = accounts.get(i).get(j);
+            if (emailSet.contains(email)) {
+                continue;
+            }
+            emailSet.add(email);
+            for (int idx : emailToIdx.get(email)) {
+                if (!vis[idx]) {
+                    accountsMergeDFS(accounts, idx, emailToIdx, vis, emailSet);
+                }
+            }
+
+        }
+    }
+
+    public int[] findIntersectionValues(int[] nums1, int[] nums2) {
+        HashSet<Integer> set1 = Arrays.stream(nums1).boxed().collect(Collectors.toCollection(HashSet::new));
+        HashSet<Integer> set2 = Arrays.stream(nums1).boxed().collect(Collectors.toCollection(HashSet::new));
+        int[] res = new int[2];
+        ArrayList<Integer> list = new ArrayList<>();
+        for (int i : nums1) {
+            res[0] += set2.contains(i) ? 1 : 0;
+        }
+        for (int i : nums2) {
+            res[1] += set1.contains(i) ? 1 : 0;
+        }
+        return res;
+    }
+
+    public int numberOfSets(int n, int maxDistance, int[][] roads) {
+        int[][] g = new int[n][n];
+        for (int[] row : g) {
+            // 防止加法溢出
+            Arrays.fill(row, Integer.MAX_VALUE / 2);
+        }
+        for (int[] road : roads) {
+            int x = road[0], y = road[1], wt = road[2];
+            g[x][y] = Math.min(g[x][y], wt);
+            g[y][x] = Math.min(g[y][x], wt);
+        }
+        int ans = 0;
+        int[][] f = new int[n][n];
+        next:
+        for (int s = 0; s < (1 << n); s++) {
+            for (int i = 0; i < n; i++) {
+                // 如果该点存在，则转移数组
+                if ((s >> i & 1) == 1) {
+                    System.arraycopy(g[i], 0, f[i], 0, n);
+                }
+            }
+            // Floyd算法
+            for (int k = 0; k < n; k++) {
+                if ((s >> k & 1) == 0) continue;
+                for (int i = 0; i < n; i++) {
+                    if ((s >> i & 1) == 0) continue;
+                    // 只有两个点都在时，才计算最短距离
+                    for (int j = 0; j < n; j++) {
+                        f[i][j] = Math.min(f[i][j], f[i][k] + f[k][j]);
+                    }
+                }
+            }
+
+            for (int i = 0; i < n; i++) {
+                if ((s >> i & 1) == 0) continue;
+                for (int j = 0; j < i; j++) {
+                    // 当两个点都在并且距离超过最大值时，此方案无效
+                    if ((s >> j & 1) == 1 && f[i][j] > maxDistance) {
+                        continue next;
+                    }
+                }
+            }
+            ans++;
+        }
+        return ans;
+    }
+
+    public int[] minimumTime(int n, int[][] edges, int[] disappear) {
+        List<int[]>[] adj = new ArrayList[n];
+        Arrays.setAll(adj, i -> new ArrayList<>());
+        for (int[] edge : edges) {
+            int u = edge[0];
+            int v = edge[1];
+            int wt = edge[2];
+            adj[u].add(new int[]{v, wt});
+            adj[v].add(new int[]{u, wt});
+        }
+        int[] dis = new int[n];
+        Arrays.fill(dis, 1);
+        dis[0] = 0;
+        PriorityQueue<int[]> pq = new PriorityQueue<>(((o1, o2) -> o1[0] - o2[0]));
+        pq.offer(new int[]{0, 0});
+        while (!pq.isEmpty()) {
+            int[] p = pq.poll();
+            int dx = p[0];
+            int x = p[1];
+            if (dx > dis[x]) {
+                continue;
+            }
+            for (int[] e : adj[x]) {
+                int y = e[0];
+                int wt = e[1];
+                int newDis = wt + dx;
+                if (disappear[y] > newDis && (dis[y] < 0 || dis[y] > newDis)) {
+                    dis[y] = newDis;
+                    pq.offer(new int[]{newDis, y});
+                }
+            }
+        }
+        return dis;
+    }
+
+    public int minimumLevels(int[] possible) {
+        int sum = 0;
+        for (int i : possible) {
+            sum += i == 1 ? 1 : -1;
+        }
+        int cur;
+        if (sum >= 0) {
+            cur = sum / 2 + 1;
+        } else {
+            cur = (sum % 2 == 0) ? (sum / 2 + 1) : (sum / 2);
+        }
+        System.out.println(cur);
+        int cnt = 0;
+        for (int i = 0; i < possible.length - 1; i++) {
+            if (possible[i] == 1) {
+                cnt++;
+            } else {
+                cnt--;
+            }
+            if (cnt == cur) {
+                return i + 1;
+            }
+        }
+        return -1;
+    }
+
+    private void dfsMinimumTime(int u, Map<Integer, Map<Integer, Integer>> map, boolean[] visited, int[] disappear, int[] res, int preV) {
+        if (!map.containsKey(u) || visited[u]) {
+            return;
+        }
+        Map<Integer, Integer> adjMap = map.get(u);
+        for (int v : adjMap.keySet()) {
+            int cur = preV + adjMap.get(v);
+            if (cur >= disappear[v]) {
+                continue;
+            }
+            res[v] = Math.min(res[v], cur);
+            visited[u] = true;
+            dfsMinimumTime(v, map, visited, disappear, res, cur);
+            visited[u] = false;
+        }
+    }
+
+    @Test
+    public void test0718() {
+        PriorityQueue<Integer> queue = new PriorityQueue<>(((o1, o2) -> o2 - o1));
+        queue.offer(1);
+        queue.offer(2);
+        System.out.println(queue.poll());
     }
 
 
